@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Web Audio Synth</title>
+  <meta name="description" content="A small subtractive synthesizer that runs in your browser. Four waveforms, ADSR envelope, low-pass filter and delay, built with the Web Audio API.">
+  <link rel="canonical" href="https://gnyaneshwar76.github.io/web-audio-synth/">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Web Audio Synth">
+  <meta property="og:description" content="A small subtractive synthesizer that runs in your browser, built with the Web Audio API.">
+  <meta property="og:url" content="https://gnyaneshwar76.github.io/web-audio-synth/">
+  <meta property="og:image" content="https://gnyaneshwar76.github.io/web-audio-synth/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preload" href="fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="top">
+      <span class="wordmark">Web Audio Synth</span>
+      <p class="status" role="status"><span class="dot" id="dot" data-state="off"></span><span id="status-text">Audio off</span></p>
+    </header>
+
+    <main class="layout">
+      <section class="intro">
+          <h1>Play a synthesizer in your browser</h1>
+          <p>Every sound is generated live by the Web Audio API. Press a key on your computer keyboard or click the keys below.</p>
+          <button type="button" class="btn-primary" id="start">Start audio</button>
+          <p class="error" id="error" role="alert" hidden>This browser does not support the Web Audio API. Try a current version of Chrome, Firefox, Safari or Edge.</p>
+        </section>
+
+      <div class="controls">
+        <fieldset class="card">
+          <legend>Waveform</legend>
+          <div class="segmented" id="wave">
+            <input type="radio" name="wave" id="wave-sine" value="sine"><label for="wave-sine">Sine</label>
+            <input type="radio" name="wave" id="wave-square" value="square"><label for="wave-square">Square</label>
+            <input type="radio" name="wave" id="wave-sawtooth" value="sawtooth" checked><label for="wave-sawtooth">Saw</label>
+            <input type="radio" name="wave" id="wave-triangle" value="triangle"><label for="wave-triangle">Triangle</label>
+          </div>
+        </fieldset>
+
+        <fieldset class="card">
+          <legend>Envelope</legend>
+          <div class="ctl"><label for="attack">Attack</label><output for="attack" id="o-attack"></output><input type="range" id="attack" data-param="attack" min="0.005" max="1.5" step="0.005" value="0.01"></div>
+          <div class="ctl"><label for="decay">Decay</label><output for="decay" id="o-decay"></output><input type="range" id="decay" data-param="decay" min="0.05" max="2" step="0.01" value="0.25"></div>
+          <div class="ctl"><label for="sustain">Sustain</label><output for="sustain" id="o-sustain"></output><input type="range" id="sustain" data-param="sustain" min="0" max="1" step="0.01" value="0.6"></div>
+          <div class="ctl"><label for="release">Release</label><output for="release" id="o-release"></output><input type="range" id="release" data-param="release" min="0.05" max="3" step="0.01" value="0.4"></div>
+        </fieldset>
+
+        <fieldset class="card">
+          <legend>Filter</legend>
+          <div class="ctl"><label for="cutoff">Cutoff</label><output for="cutoff" id="o-cutoff"></output><input type="range" id="cutoff" data-param="cutoff" min="0" max="100" step="1" value="78"></div>
+          <div class="ctl"><label for="resonance">Resonance</label><output for="resonance" id="o-resonance"></output><input type="range" id="resonance" data-param="resonance" min="0.5" max="18" step="0.1" value="1"></div>
+        </fieldset>
+
+        <fieldset class="card">
+          <legend>Delay</legend>
+          <div class="ctl"><label for="delayTime">Time</label><output for="delayTime" id="o-delayTime"></output><input type="range" id="delayTime" data-param="delayTime" min="0.05" max="1" step="0.01" value="0.3"></div>
+          <div class="ctl"><label for="feedback">Feedback</label><output for="feedback" id="o-feedback"></output><input type="range" id="feedback" data-param="feedback" min="0" max="0.85" step="0.01" value="0.35"></div>
+          <div class="ctl"><label for="mix">Mix</label><output for="mix" id="o-mix"></output><input type="range" id="mix" data-param="mix" min="0" max="0.8" step="0.01" value="0.2"></div>
+        </fieldset>
+
+        <fieldset class="card">
+          <legend>Output</legend>
+          <div class="ctl"><label for="volume">Volume</label><output for="volume" id="o-volume"></output><input type="range" id="volume" data-param="volume" min="0" max="1" step="0.01" value="0.7"></div>
+        </fieldset>
+      </div>
+
+      <div class="stage">
+        <section class="card" aria-labelledby="scope-title">
+          <div class="row">
+            <h2 id="scope-title">Output waveform</h2>
+            <p class="readout mono" id="readout">No note played yet</p>
+          </div>
+          <canvas id="scope" role="img" aria-label="Live waveform of the audio output"></canvas>
+        </section>
+
+        <section class="card" aria-labelledby="keys-title">
+          <div class="row">
+            <h2 id="keys-title">Keyboard</h2>
+            <div class="octave">
+              <button type="button" class="btn-quiet" id="oct-down" aria-label="Octave down, shortcut Z">Octave down</button>
+              <span class="mono" id="oct-label">C4 to E5</span>
+              <button type="button" class="btn-quiet" id="oct-up" aria-label="Octave up, shortcut X">Octave up</button>
+            </div>
+          </div>
+          <div class="keys" id="keys"></div>
+          <p class="hint">Computer keys: <span class="mono">A S D F G H J K L ;</span> for white keys, <span class="mono">W E T Y U O P</span> for black keys, <span class="mono">Z</span> and <span class="mono">X</span> to change octave.</p>
+        </section>
+      </div>
+    </main>
+
+    <section class="how" aria-labelledby="how-title">
+      <h2 id="how-title">How it is built</h2>
+      <p class="muted">Each note creates its own oscillator and gain node, so chords work. All notes share one filter and one delay.</p>
+      <dl>
+        <div><dt>Oscillator</dt><dd>An <span class="mono">OscillatorNode</span> makes the raw tone. Pitch follows 440 Hz &times; 2<sup>(note &minus; 69) / 12</sup>.</dd></div>
+        <div><dt>Envelope</dt><dd>A <span class="mono">GainNode</span> shapes volume over time: attack, decay, sustain while the key is held, release after it is let go. Changes are scheduled, never jumped, to avoid clicks.</dd></div>
+        <div><dt>Filter</dt><dd>A low-pass <span class="mono">BiquadFilterNode</span> removes high frequencies. Lower cutoff sounds darker, higher resonance adds a peak at the cutoff.</dd></div>
+        <div><dt>Delay</dt><dd>A <span class="mono">DelayNode</span> feeds part of its output back into itself. Feedback stays below 100% so the echo fades out.</dd></div>
+        <div><dt>Output</dt><dd>A compressor stops loud chords from clipping. An <span class="mono">AnalyserNode</span> supplies the samples for the waveform display.</dd></div>
+      </dl>
+    </section>
+
+    <footer class="foot">
+      <p>Independent student project. <a href="https://github.com/gnyaneshwar76/web-audio-synth">Source code</a> &middot; <a href="privacy.html">Privacy</a></p>
+    </footer>
+  </div>
+
+  <noscript><p class="error page">This synthesizer needs JavaScript.</p></noscript>
+  <script src="synth-math.js"></script>
+  <script src="engine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

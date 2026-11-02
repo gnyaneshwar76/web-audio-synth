@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://gnyaneshwar76.github.io/web-audio-synth/sitemap.xml
