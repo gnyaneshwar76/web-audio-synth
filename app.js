@@ -35,6 +35,7 @@
         ctx.onstatechange = updateStatus;
         applyAll();
         drawLoop();
+        updateStatus(); // show "suspended" right away; resume() can take a while or never finish without an audio device
       }
       if (ctx.state !== 'running') await ctx.resume();
     } catch (e) {
