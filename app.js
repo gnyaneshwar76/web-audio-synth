@@ -94,10 +94,11 @@
     el.className = 'key ' + kind;
     el.dataset.offset = k[0];
     el.dataset.code = k[1];
-    el.innerHTML = (kind === 'white' ? '<span class="note"></span>' : '') + '<span>' + (KEYLABEL[k[1]] || k[1].replace('Key', '')) + '</span>';
-    if (kind === 'black') el.style.left = 'calc(' + ((k[2] + 1) * 10) + '% - 3%)';
+    var letter = KEYLABEL[k[1]] || k[1].replace('Key', '');
+    el.innerHTML = (kind === 'white' ? '<span class="note"></span> ' : '') + '<span>' + letter + '</span>';
+    if (kind === 'black') el.style.left = 'calc(' + ((k[2] + 1) * 10) + '% - var(--bk) / 2)';
     keysEl.appendChild(el);
-    keyEls[k[1]] = { el: el, offset: k[0] };
+    keyEls[k[1]] = { el: el, offset: k[0], letter: letter };
     el.addEventListener('pointerdown', function (e) {
       e.preventDefault();
       try { el.setPointerCapture(e.pointerId); } catch (_) { /* older browsers */ }
@@ -111,7 +112,7 @@
     Object.keys(keyEls).forEach(function (code) {
       var n = keyEls[code].el.querySelector('.note');
       var midi = BASE + 12 * octave + keyEls[code].offset;
-      keyEls[code].el.setAttribute('aria-label', M.noteName(midi));
+      keyEls[code].el.setAttribute('aria-label', M.noteName(midi) + ' ' + keyEls[code].letter); // must contain the visible text
       if (n) n.textContent = M.noteName(midi);
     });
     $('oct-label').textContent = M.noteName(BASE + 12 * octave) + ' to ' + M.noteName(BASE + 12 * octave + 16);
